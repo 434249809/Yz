@@ -256,19 +256,20 @@
         <div class="path-row">
             <div class="field-group">
                 <label>子文件夹名称（相对于浏览器默认下载目录）</label>
-                <input type="text" id="save-folder" placeholder="例如：wallpapers 或 2025/travel" oninput="updatePreview()">
+                <input type="text" id="save-folder" placeholder="例如：wallpapers 或 2025/travel" oninput="savePath(); updatePreview()">
             </div>
             <div class="field-group">
                 <label>文件名前缀</label>
-                <input type="text" id="save-prefix" placeholder="例如：photo 或 img_batch" oninput="updatePreview()">
+                <input type="text" id="save-prefix" placeholder="例如：photo 或 img_batch" oninput="savePath(); updatePreview()">
             </div>
         </div>
         <div class="path-preview" id="path-preview">
-            ⬇ 下载到：<span>Downloads/</span>photo_001.jpg
+            ⬇ 下载到：<span>Downloads/</span>IMG_001.jpg
         </div>
         <div class="path-tip">
             💡 子文件夹支持多级，如 <code>旅行/2025</code>，Chrome / Edge 会自动在下载目录内创建。<br>
-            ⚠️ Safari 和部分手机浏览器不支持子文件夹，将直接保存到下载根目录。
+            ⚠️ Safari 和部分手机浏览器不支持子文件夹，将直接保存到下载根目录。<br>
+            💾 路径设置已自动保存，下次打开页面会自动恢复。
         </div>
     </div>
 
@@ -291,6 +292,28 @@
 
     function log(msg) {
         logArea.innerHTML = `<span style="color:#64748b">[${new Date().toLocaleTimeString()}]</span> ${msg}<br>` + logArea.innerHTML;
+    }
+
+    /* ── localStorage 持久化 ── */
+    const STORAGE_KEY = 'imgHelper_pathConfig';
+
+    function savePath() {
+        const config = {
+            folder: document.getElementById('save-folder').value,
+            prefix: document.getElementById('save-prefix').value
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+    }
+
+    function loadPath() {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return;
+            const config = JSON.parse(saved);
+            if (config.folder !== undefined) document.getElementById('save-folder').value = config.folder;
+            if (config.prefix !== undefined) document.getElementById('save-prefix').value = config.prefix;
+            log('✅ 已自动恢复上次保存的路径配置');
+        } catch(e) {}
     }
 
     /* ── 路径预览 ── */
@@ -354,7 +377,8 @@
         alert('触发完毕！\n\n✅ Chrome/Edge：文件已保存到指定子文件夹\n⚠️ 若弹出"允许下载多个文件"，请点允许\n📱 手机端：若新页面打开图片，请长按→保存图片');
     }
 
-    // 初始化预览
+    // 初始化：先恢复存储的路径，再刷新预览
+    loadPath();
     updatePreview();
 </script>
 
