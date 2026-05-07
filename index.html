@@ -2,1183 +2,361 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI 绘图助手 | Pro Ultimate</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>图片助手 v5</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
         :root {
-            --bg-body: #121212;
-            --bg-panel: #1e1e1e;
-            --bg-bubble-user: #3c4043;
-            --bg-bubble-sys: #000000;
-            --bg-input: #252525;
-            --primary: #8ab4f8;
-            --primary-gradient: linear-gradient(135deg, #8ab4f8, #4c8df6);
-            --text-main: #e3e3e3;
-            --text-sub: #9aa0a6;
-            --border: #3c3c3c;
-            --radius-bubble: 16px;
-            --radius-input: 24px;
-            --safe-bottom: env(safe-area-inset-bottom);
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --muted: #94a3b8;
+            --radius: 10px;
         }
 
-        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            height: 100dvh;
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            padding: 20px 15px 40px;
             display: flex;
             flex-direction: column;
+            align-items: center;
+        }
+
+        h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            text-align: center;
+            margin-bottom: 18px;
+            letter-spacing: 0.5px;
+        }
+
+        .card {
+            background: var(--card);
+            width: 100%;
+            max-width: 520px;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+        }
+
+        /* ── 路径设置区 ── */
+        .path-section {
+            background: var(--primary-light);
+            border: 1px solid #bfdbfe;
+            border-radius: var(--radius);
+            padding: 14px;
+            margin-bottom: 14px;
+        }
+
+        .path-section .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 10px;
+        }
+
+        .path-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .field-group label {
+            font-size: 11px;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .field-group input {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            color: var(--text);
+            background: white;
+            transition: border-color 0.2s;
+        }
+
+        .field-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
+        .path-preview {
+            margin-top: 8px;
+            font-size: 11px;
+            color: #64748b;
+            background: white;
+            border: 1px dashed #cbd5e1;
+            border-radius: 6px;
+            padding: 7px 10px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+
+        .path-preview span { color: var(--primary); font-weight: 600; }
+
+        .path-tip {
+            margin-top: 6px;
+            font-size: 10px;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        /* ── 输入区 ── */
+        textarea {
+            width: 100%;
+            height: 100px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px;
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            color: var(--text);
+            transition: border-color 0.2s;
+        }
+        textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+
+        /* ── 按钮 ── */
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        button {
+            padding: 11px;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            color: white;
+            font-family: inherit;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+        button:active { transform: scale(0.97); }
+
+        .btn-preview  { background: #475569; }
+        .btn-download { background: var(--primary); }
+        button:hover  { opacity: 0.88; }
+
+        /* ── 图片列表 ── */
+        #result-list { margin-top: 14px; }
+
+        .item {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: var(--radius);
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+            gap: 12px;
+        }
+
+        .item img {
+            width: 56px;
+            height: 56px;
+            object-fit: cover;
+            border-radius: 6px;
+            background: #e2e8f0;
+            flex-shrink: 0;
+        }
+
+        .item-info {
+            flex: 1;
             overflow: hidden;
         }
 
-        /* 隐藏 Datalist 小箭头 */
-        input::-webkit-calendar-picker-indicator { display: none !important; opacity: 0; }
-
-        .icon { width: 24px; height: 24px; fill: currentColor; }
-        .icon-sm { width: 16px; height: 16px; fill: currentColor; }
-
-        /* --- 顶部导航 --- */
-        .header {
-            height: 52px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 16px;
-            background: rgba(18, 18, 18, 0.95);
-            backdrop-filter: blur(12px);
-            z-index: 10;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+        .item-info .img-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
         }
 
-        .header-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--text-main);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .header-actions { display: flex; gap: 4px; }
-
-        .icon-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            padding: 8px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s;
-        }
-        .icon-btn:active { background: rgba(255,255,255,0.1); transform: scale(0.95); }
-
-        /* --- 聊天主区域 --- */
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            scroll-behavior: smooth;
-        }
-
-        .msg-group {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            opacity: 0;
-            animation: fadeIn 0.25s forwards ease-out;
-        }
-        
-        .msg-group.sys { align-items: flex-start; }
-        .msg-group.user { align-items: flex-end; }
-
-        .msg-content-wrapper {
-            display: flex;
-            gap: 8px;
-            max-width: 100%;
-        }
-        .msg-group.user .msg-content-wrapper { flex-direction: row-reverse; }
-
-        .avatar {
-            width: 28px; height: 28px;
-            border-radius: 50%;
-            background: var(--primary-gradient);
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .item-info .img-path {
             font-size: 10px;
-            color: #fff;
-            font-weight: 800;
-            box-shadow: 0 2px 6px rgba(76, 141, 246, 0.3);
+            color: #64748b;
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
             margin-top: 2px;
         }
-        .msg-group.user .avatar { display: none; }
 
-        .bubble {
-            max-width: 88%;
-            padding: 10px 14px;
-            border-radius: var(--radius-bubble);
-            font-size: 0.95rem;
-            line-height: 1.5;
-            position: relative;
-            word-wrap: break-word;
-        }
-
-        .msg-group.user .bubble {
-            background: var(--bg-bubble-user);
-            color: #fff;
-            border-bottom-right-radius: 4px;
-        }
-
-        .msg-group.sys .bubble {
-            background: transparent;
-            padding-left: 0;
-            padding-top: 2px;
-            color: var(--text-main);
-            max-width: 100%;
-        }
-
-        /* 图片显示 */
-        .chat-img-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 6px;
-        }
-        .chat-img {
-            max-width: 100%;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            cursor: pointer;
-            transition: transform 0.2s;
-            background: #000;
-        }
-        .chat-img:active { transform: scale(0.98); }
-        .chat-img.preview-sm { width: 70px; height: 70px; object-fit: cover; }
-        .chat-img.result-lg { width: 100%; max-width: 360px; height: auto; display: block; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-
-        /* 操作按钮栏 */
-        .action-bar {
-            display: flex;
-            gap: 12px;
-            margin-top: 4px;
-            padding: 0 2px;
-            opacity: 0.6;
-            transition: opacity 0.2s;
-        }
-        .msg-group:hover .action-bar { opacity: 1; }
-        .msg-group.user .action-bar { justify-content: flex-end; padding-right: 4px;}
-        .msg-group.sys .action-bar { justify-content: flex-start; padding-left: 38px; }
-
-        .action-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-sub);
-            font-size: 0.7rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px;
-            border-radius: 4px;
-        }
-        .action-btn:hover { color: var(--text-main); }
-        .action-btn.delete:hover { color: #ff6b6b; }
-
-        /* 等待计时器 */
-        .timer-box {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--primary);
-            font-size: 0.85rem;
-            font-family: monospace;
-            padding: 8px 12px;
-            background: rgba(138, 180, 248, 0.08);
-            border-radius: 8px;
-            width: fit-content;
-        }
-        .spinner {
-            width: 12px; height: 12px;
-            border: 2px solid var(--primary);
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        /* --- 输入栏 --- */
-        .input-area {
-            background: var(--bg-body);
-            padding: 8px 12px calc(8px + var(--safe-bottom)) 12px;
-            width: 100%;
-            border-top: 1px solid rgba(255,255,255,0.08);
-            position: relative;
-            z-index: 20;
-        }
-
-        .upload-preview-bar {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            height: 0;
-            opacity: 0;
-            transition: all 0.2s ease;
-        }
-        .upload-preview-bar.has-files {
-            height: 64px;
-            margin-bottom: 8px;
-            opacity: 1;
-            padding-bottom: 4px;
-        }
-
-        .preview-item {
-            position: relative;
-            width: 56px; height: 56px;
-            flex-shrink: 0;
-        }
-        .preview-item img {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-        .preview-close {
-            position: absolute;
-            top: -5px; right: -5px;
-            background: #222;
-            color: #fff;
-            border-radius: 50%;
-            width: 18px; height: 18px;
+        .item-info .img-url {
             font-size: 10px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-            border: 1px solid #444;
-            z-index: 2;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 1px;
         }
 
-        .input-wrapper {
-            background: var(--bg-input);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            padding: 4px 6px 4px 12px;
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: border 0.2s, background 0.2s;
-            min-height: 42px;
-        }
-        .input-wrapper:focus-within { border-color: rgba(138, 180, 248, 0.3); background: #2a2a2a; }
-
-        .input-btn {
-            padding: 6px;
-            color: var(--text-sub);
-            cursor: pointer;
-            background: transparent;
-            border: none;
+        .dl-link {
+            background: var(--success);
+            color: white;
+            padding: 7px 13px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
             flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 50%;
-            transition: background 0.2s;
+            transition: opacity 0.15s;
         }
-        .input-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+        .dl-link:hover { opacity: 0.85; }
 
-        .input-btn.send-btn {
-            background: var(--primary);
-            color: #000;
-            width: 32px; height: 32px;
-            padding: 0;
-            margin-left: 6px;
+        /* ── 日志 ── */
+        #log {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 10px;
+            border-top: 1px solid var(--border);
+            padding-top: 8px;
+            max-height: 80px;
+            overflow-y: auto;
+            line-height: 1.7;
         }
-        .input-btn.send-btn:active { transform: scale(0.9); }
-        .input-btn.send-btn svg { width: 18px; height: 18px; transform: translateX(1px); }
-
-        textarea#promptInput {
-            background: transparent;
-            border: none;
-            color: #fff;
-            width: 100%;
-            max-height: 100px;
-            min-height: 20px;
-            padding: 6px 4px;
-            font-size: 0.95rem;
-            line-height: 1.4;
-            resize: none;
-            font-family: inherit;
-        }
-
-        /* --- 设置面板 --- */
-        .settings-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px);
-            z-index: 99; opacity: 0; pointer-events: none; transition: opacity 0.3s;
-        }
-        .settings-overlay.active { opacity: 1; pointer-events: auto; }
-
-        .settings-panel {
-            position: fixed; top: 0; right: 0;
-            width: 85%; max-width: 340px; height: 100%;
-            background: var(--bg-panel);
-            z-index: 100;
-            transform: translateX(100%);
-            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-            display: flex; flex-direction: column;
-            border-left: 1px solid var(--border);
-            box-shadow: -10px 0 40px rgba(0,0,0,0.6);
-        }
-        .settings-panel.active { transform: translateX(0); }
-
-        .panel-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
-            font-weight: 600; font-size: 1rem;
-        }
-
-        .panel-content {
-            flex: 1; overflow-y: auto; padding: 20px;
-            display: flex; flex-direction: column; gap: 18px;
-        }
-
-        .form-group { display: flex; flex-direction: column; gap: 8px; }
-        .form-row { display: flex; justify-content: space-between; align-items: center; }
-        .form-label { font-size: 0.85rem; color: var(--text-sub); font-weight: 500; }
-        
-        .form-input {
-            background: #2a2b2d; border: 1px solid var(--border);
-            color: #fff; padding: 10px 12px; border-radius: 8px;
-            font-size: 0.9rem; width: 100%; appearance: none; transition: border 0.2s;
-        }
-        .form-input:focus { border-color: var(--primary); }
-
-        /* 开关样式 */
-        .toggle-switch {
-            appearance: none; width: 40px; height: 22px;
-            background: #3c4043; border-radius: 12px;
-            position: relative; cursor: pointer; transition: background 0.3s;
-        }
-        .toggle-switch::after {
-            content: ''; position: absolute; top: 2px; left: 2px;
-            width: 18px; height: 18px; background: #fff;
-            border-radius: 50%; transition: transform 0.3s;
-        }
-        .toggle-switch:checked { background: var(--primary); }
-        .toggle-switch:checked::after { transform: translateX(18px); }
-        
-        .custom-select-trigger {
-            background: #2a2b2d; border: 1px solid var(--border);
-            color: #fff; padding: 10px 12px; border-radius: 8px;
-            font-size: 0.9rem; display: flex; justify-content: space-between;
-            align-items: center; cursor: pointer;
-        }
-        .custom-select-trigger span { color: var(--text-sub); font-size: 0.8rem; }
-        
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-        .ratio-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-        .ratio-item {
-            background: #2a2b2d; border: 1px solid var(--border);
-            border-radius: 6px; padding: 8px 0; text-align: center;
-            font-size: 0.75rem; cursor: pointer; transition: 0.2s;
-            display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-sub);
-        }
-        .ratio-item.active { background: rgba(138, 180, 248, 0.15); border-color: var(--primary); color: var(--primary); }
-        .ratio-icon { border: 1.5px solid currentColor; display: block; border-radius: 1px;}
-
-        .btn-clear {
-            width: 100%; padding: 12px; background: rgba(239, 68, 68, 0.1);
-            color: #ff6b6b; border: 1px solid rgba(239, 68, 68, 0.2);
-            border-radius: 8px; margin-top: auto; cursor: pointer;
-            font-weight: 600; font-size: 0.9rem;
-        }
-
-        /* --- 风格选择弹窗 (优化版) --- */
-        .style-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 200;
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.2s;
-            backdrop-filter: blur(5px);
-        }
-        .style-modal.active { opacity: 1; pointer-events: auto; }
-        
-        .style-container {
-            width: 90%; max-width: 400px; background: #1e1e1e;
-            border-radius: 16px; border: 1px solid #333;
-            max-height: 80vh; display: flex; flex-direction: column;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-        .style-header {
-            padding: 16px; border-bottom: 1px solid #333;
-            font-weight: 600; display: flex; justify-content: space-between; align-items: center;
-        }
-        .style-content {
-            padding: 12px; overflow-y: auto;
-            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-        }
-        .style-card {
-            background: #2a2a2a; border: 1px solid #3c3c3c;
-            border-radius: 8px; padding: 14px 10px;
-            cursor: pointer; text-align: center; transition: all 0.2s;
-            display: flex; align-items: center; justify-content: center;
-            min-height: 50px;
-        }
-        .style-card:hover { background: #333; border-color: #555; }
-        .style-card.active { border-color: var(--primary); background: rgba(138, 180, 248, 0.1); color: var(--primary); }
-        .style-name { font-size: 0.9rem; font-weight: 500; }
-
-        /* 图片大图弹窗 */
-        .modal {
-            display: none; position: fixed; z-index: 2000; left: 0; top: 0;
-            width: 100%; height: 100%; background-color: rgba(0,0,0,0.95);
-            justify-content: center; align-items: center;
-            opacity: 0; transition: opacity 0.2s;
-        }
-        .modal.active { display: flex; opacity: 1; }
-        .modal img { max-width: 100%; max-height: 85vh; border-radius: 8px; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
-        .close-modal { position: absolute; top: 20px; right: 20px; color: #fff; cursor: pointer; padding: 10px; z-index: 2001; background: rgba(255,255,255,0.1); border-radius: 50%;}
-        .download-btn {
-            position: absolute; bottom: 40px; background: #fff; color: #000;
-            padding: 10px 24px; border-radius: 24px; text-decoration: none;
-            font-weight: 600; font-size: 0.95rem; box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
     </style>
 </head>
 <body>
 
-    <header class="header">
-        <div class="header-title">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
-            <span>AI Studio Ultimate</span>
-        </div>
-        <div class="header-actions">
-            <button class="icon-btn" onclick="app.newChat()" title="新对话">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-            </button>
-            <button class="icon-btn" onclick="app.toggleSettings(true)" title="设置">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
-            </button>
-        </div>
-    </header>
+<div class="card">
+    <h2>📦 图片批量助手</h2>
 
-    <div class="chat-container" id="chatContainer">
-        <div class="msg-group sys" id="welcomeMsg">
-            <div class="msg-content-wrapper">
-                <div class="avatar">AI</div>
-                <div class="bubble">
-                    <strong>助手就绪 (Ultimate版)</strong><br>
-                    1. 完美保留所有功能。<br>
-                    2. 设置新增 <b>“强制 Image API”</b> 开关，开启后完美适配 OpenAI DALL-E 3 标准接口。<br>
-                    3. 优化了风格选择器 UI。<br>
-                    请在设置中配置 API Key 开始创作。
-                </div>
+    <!-- 自定义保存路径 -->
+    <div class="path-section">
+        <div class="section-title">📁 自定义保存路径</div>
+        <div class="path-row">
+            <div class="field-group">
+                <label>子文件夹名称（相对于浏览器默认下载目录）</label>
+                <input type="text" id="save-folder" placeholder="例如：wallpapers 或 2025/travel" oninput="updatePreview()">
             </div>
+            <div class="field-group">
+                <label>文件名前缀</label>
+                <input type="text" id="save-prefix" placeholder="例如：photo 或 img_batch" oninput="updatePreview()">
+            </div>
+        </div>
+        <div class="path-preview" id="path-preview">
+            ⬇ 下载到：<span>Downloads/</span>photo_001.jpg
+        </div>
+        <div class="path-tip">
+            💡 子文件夹支持多级，如 <code>旅行/2025</code>，Chrome / Edge 会自动在下载目录内创建。<br>
+            ⚠️ Safari 和部分手机浏览器不支持子文件夹，将直接保存到下载根目录。
         </div>
     </div>
 
-    <div class="input-area">
-        <div class="upload-preview-bar" id="uploadPreview"></div>
-        <div class="input-wrapper">
-            <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="app.handleFiles(this.files)">
-            <button class="input-btn" onclick="document.getElementById('fileInput').click()" title="上传参考图">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-            </button>
-            <textarea id="promptInput" rows="1" placeholder="描述你的创意..." oninput="app.autoResize(this)"></textarea>
-            <button class="input-btn send-btn" id="sendBtn" onclick="app.sendMessage()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
-            </button>
-        </div>
+    <!-- 链接输入 -->
+    <textarea id="input" placeholder="请在此粘贴图片链接，每行一条..."></textarea>
+
+    <div class="btn-group">
+        <button class="btn-preview"  onclick="processLinks()">解析并预览</button>
+        <button class="btn-download" onclick="batchDownload()">一键尝试下载</button>
     </div>
 
-    <div class="settings-overlay" id="settingsOverlay" onclick="app.toggleSettings(false)"></div>
-    <aside class="settings-panel" id="settingsPanel">
-        <div class="panel-header">
-            <span>高级设置</span>
-            <button class="icon-btn" onclick="app.toggleSettings(false)">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-            </button>
-        </div>
-        <div class="panel-content">
-            <div class="form-group">
-                <div class="form-row">
-                    <label class="form-label">强制 Image API (DALL-E 3标准)</label>
-                    <input type="checkbox" id="forceImageMode" class="toggle-switch">
-                </div>
-                <div style="font-size:0.75rem; color:#666; line-height:1.3;">
-                    开启后强制使用 <code>/v1/images/generations</code> 格式。适配 OpenAI 原生 DALL-E 接口。关闭则使用 Chat 格式 (MJ/Gpts)。
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">API 接口地址</label>
-                <input type="url" class="form-input" id="apiUrl" placeholder="https://api.openai.com/v1">
-            </div>
-            <div class="form-group">
-                <label class="form-label">API Key</label>
-                <input type="password" class="form-input" id="apiKey" placeholder="sk-...">
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">风格预设 (Style)</label>
-                <div class="custom-select-trigger" onclick="app.openStyleModal()">
-                    <div id="styleDisplay">默认 (None)</div>
-                    <span>更换 &gt;</span>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">模型 (Model)</label>
-                <input type="text" class="form-input" id="modelId" list="models" placeholder="dall-e-3 / gpt-4o">
-                <datalist id="models">
-                    <option value="dall-e-3">
-                    <option value="gpt-4o">
-                    <option value="midjourney">
-                    <option value="stable-diffusion-3">
-                </datalist>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">画面比例</label>
-                <div class="ratio-grid" id="ratioGrid">
-                    <div class="ratio-item active" onclick="app.setRatio('1024x1024', this)">
-                        <div class="ratio-icon" style="width:14px; height:14px;"></div>1:1
-                    </div>
-                    <div class="ratio-item" onclick="app.setRatio('1024x1792', this)">
-                        <div class="ratio-icon" style="width:10px; height:16px;"></div>9:16
-                    </div>
-                    <div class="ratio-item" onclick="app.setRatio('1792x1024', this)">
-                        <div class="ratio-icon" style="width:16px; height:10px;"></div>16:9
-                    </div>
-                    <div class="ratio-item" onclick="app.setRatio('1024x768', this)">
-                        <div class="ratio-icon" style="width:16px; height:12px;"></div>4:3
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid-2">
-                <div class="form-group">
-                    <label class="form-label">步数 (Steps)</label>
-                    <input type="number" class="form-input" id="steps" value="20" min="1" max="50">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">CFG Scale</label>
-                    <input type="number" class="form-input" id="cfg" value="7" min="1" max="20">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">负向提示词 (Negative)</label>
-                <textarea class="form-input" id="negPrompt" rows="2" placeholder="NSFW, ugly, bad hands..."></textarea>
-            </div>
-
-            <button class="btn-clear" onclick="app.clearHistory()">
-                清空数据与缓存
-            </button>
-        </div>
-    </aside>
-
-    <div class="style-modal" id="styleModal" onclick="if(event.target===this) app.closeStyleModal()">
-        <div class="style-container">
-            <div class="style-header">
-                选择艺术风格
-                <div onclick="app.closeStyleModal()" style="cursor:pointer; padding:4px;">✕</div>
-            </div>
-            <div class="style-content" id="styleGrid">
-                </div>
-        </div>
-    </div>
-
-    <div class="modal" id="imageModal">
-        <span class="close-modal" onclick="document.getElementById('imageModal').classList.remove('active')">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-        </span>
-        <img id="modalImg">
-        <a id="downloadLink" class="download-btn">保存图片</a>
-    </div>
+    <div id="result-list"></div>
+    <div id="log"></div>
+</div>
 
 <script>
-    const STYLES = [
-        { name: "无 (默认)", value: "" },
-        { name: "赛博朋克", value: "Cyberpunk style, neon lights, high contrast, futuristic" },
-        { name: "日系二次元", value: "Anime style, Japanese animation, vibrant colors, high quality" },
-        { name: "3D 渲染", value: "3D render, c4d, blender, octave render, high poly, studio lighting" },
-        { name: "水彩画", value: "Watercolor painting, artistic, soft colors, wet-on-wet technique" },
-        { name: "油画", value: "Oil painting, textured brushstrokes, classical art style" },
-        { name: "极简插画", value: "Flat illustration, vector art, minimalist, clean lines" },
-        { name: "黑白素描", value: "Pencil sketch, monochrome, detailed lines, rough texture" },
-        { name: "真实摄影", value: "Photorealistic, 8k, highly detailed, shot on DSLR" }
-    ];
+    const input      = document.getElementById('input');
+    const resultList = document.getElementById('result-list');
+    const logArea    = document.getElementById('log');
 
-    const app = {
-        state: {
-            size: '1024x1024',
-            uploadedImages: [], 
-            chatHistory: [], 
-            isGenerating: false,
-            timerInterval: null,
-            currentStyle: ""
-        },
+    function log(msg) {
+        logArea.innerHTML = `<span style="color:#64748b">[${new Date().toLocaleTimeString()}]</span> ${msg}<br>` + logArea.innerHTML;
+    }
 
-        init() {
-            this.state.isGenerating = false;
-            this.loadSettings();
-            this.loadChatHistory();
-            this.renderStyles();
-            this.autoResize(document.getElementById('promptInput'));
-            
-            document.getElementById('promptInput').addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    this.sendMessage();
-                }
-            });
-        },
+    /* ── 路径预览 ── */
+    function updatePreview() {
+        const folder = document.getElementById('save-folder').value.trim().replace(/^\/|\/$/g, '');
+        const prefix = document.getElementById('save-prefix').value.trim() || 'IMG';
+        const folderPart = folder ? `${folder}/` : '';
+        document.getElementById('path-preview').innerHTML =
+            `⬇ 下载到：<span>Downloads/${folderPart}</span>${prefix}_001.jpg`;
+    }
 
-        generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); },
+    /* ── 构建文件名 ── */
+    function buildFileName(index) {
+        const folder = document.getElementById('save-folder').value.trim().replace(/^\/|\/$/g, '');
+        const prefix = document.getElementById('save-prefix').value.trim() || 'IMG';
+        const num    = String(index + 1).padStart(3, '0');
+        const name   = `${prefix}_${num}.jpg`;
+        return folder ? `${folder}/${name}` : name;
+    }
 
-        /* --- 风格弹窗逻辑 --- */
-        renderStyles() {
-            const grid = document.getElementById('styleGrid');
-            grid.innerHTML = STYLES.map(s => `
-                <div class="style-card ${this.state.currentStyle === s.value ? 'active' : ''}" 
-                     onclick="app.selectStyle('${s.value}')">
-                    <div class="style-name">${s.name}</div>
-                </div>
-            `).join('');
-            
-            const activeStyle = STYLES.find(s => s.value === this.state.currentStyle);
-            document.getElementById('styleDisplay').innerText = activeStyle ? activeStyle.name : "默认 (None)";
-        },
+    /* ── 解析并展示 ── */
+    function processLinks() {
+        resultList.innerHTML = '';
+        const urls = input.value.split('\n').map(u => u.trim()).filter(u => u.length > 10);
+        if (urls.length === 0) return alert('请输入有效链接');
 
-        openStyleModal() { document.getElementById('styleModal').classList.add('active'); },
-        closeStyleModal() { document.getElementById('styleModal').classList.remove('active'); },
-        
-        selectStyle(val) {
-            this.state.currentStyle = val;
-            this.saveSettings();
-            this.renderStyles();
-            this.closeStyleModal();
-        },
+        urls.forEach((url, index) => {
+            const fileName    = buildFileName(index);
+            const displayName = fileName.split('/').pop();
+            const dirPart     = fileName.includes('/') ? fileName.substring(0, fileName.lastIndexOf('/') + 1) : '';
 
-        /* --- 设置存取 --- */
-        saveSettings() {
-            const s = {
-                url: document.getElementById('apiUrl').value,
-                key: document.getElementById('apiKey').value,
-                model: document.getElementById('modelId').value,
-                style: this.state.currentStyle,
-                steps: document.getElementById('steps').value,
-                cfg: document.getElementById('cfg').value,
-                neg: document.getElementById('negPrompt').value,
-                ratio: this.state.size,
-                forceImage: document.getElementById('forceImageMode').checked // 保存开关状态
-            };
-            localStorage.setItem('ai_settings_ultimate', JSON.stringify(s));
-            return s;
-        },
-
-        loadSettings() {
-            const s = JSON.parse(localStorage.getItem('ai_settings_ultimate') || '{}');
-            if(s.url) document.getElementById('apiUrl').value = s.url;
-            if(s.key) document.getElementById('apiKey').value = s.key;
-            if(s.model) document.getElementById('modelId').value = s.model;
-            if(s.steps) document.getElementById('steps').value = s.steps;
-            if(s.neg) document.getElementById('negPrompt').value = s.neg;
-            
-            // 恢复开关
-            if(s.forceImage !== undefined) document.getElementById('forceImageMode').checked = s.forceImage;
-
-            if(s.style !== undefined) this.state.currentStyle = s.style;
-            
-            if(s.ratio) {
-                this.state.size = s.ratio;
-                document.querySelectorAll('.ratio-item').forEach(el => {
-                    el.classList.remove('active');
-                    if(el.innerText.includes(s.ratio.split('x')[0]) || el.innerText.includes('1:1')) {
-                        el.classList.add('active');
-                    }
-                });
-            }
-        },
-
-        /* --- 历史记录 --- */
-        saveChatHistory() {
-            try {
-                const saveable = this.state.chatHistory.slice(-30);
-                localStorage.setItem('ai_chat_history_ultimate', JSON.stringify(saveable));
-            } catch (e) { console.warn("Storage full"); }
-        },
-
-        loadChatHistory() {
-            try {
-                const raw = localStorage.getItem('ai_chat_history_ultimate');
-                const history = raw ? JSON.parse(raw) : [];
-                if (Array.isArray(history) && history.length > 0) {
-                    document.getElementById('welcomeMsg').style.display = 'none';
-                    this.state.chatHistory = history;
-                    const container = document.getElementById('chatContainer');
-                    const dynamicMsgs = container.querySelectorAll('.msg-group:not(#welcomeMsg)');
-                    dynamicMsgs.forEach(el => el.remove());
-                    history.forEach(msg => {
-                        if(msg && (msg.content || (msg.images && msg.images.length))) {
-                            this.renderMessageToDOM(msg);
-                        }
-                    });
-                    setTimeout(() => container.scrollTop = container.scrollHeight, 100);
-                }
-            } catch (e) {
-                localStorage.removeItem('ai_chat_history_ultimate');
-            }
-        },
-
-        clearHistory() {
-            if(confirm("确定要清空所有数据吗？")) {
-                localStorage.removeItem('ai_settings_ultimate');
-                localStorage.removeItem('ai_chat_history_ultimate');
-                location.reload();
-            }
-        },
-
-        /* --- 交互逻辑 --- */
-        toggleSettings(show) {
-            const panel = document.getElementById('settingsPanel');
-            const overlay = document.getElementById('settingsOverlay');
-            if (show) {
-                panel.classList.add('active');
-                overlay.classList.add('active');
-            } else {
-                panel.classList.remove('active');
-                overlay.classList.remove('active');
-                this.saveSettings();
-            }
-        },
-
-        setRatio(size, el) {
-            this.state.size = size;
-            document.querySelectorAll('.ratio-item').forEach(i => i.classList.remove('active'));
-            el.classList.add('active');
-            this.saveSettings();
-        },
-
-        autoResize(textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
-        },
-
-        newChat() {
-            this.state.isGenerating = false;
-            this.state.chatHistory = [];
-            this.state.uploadedImages = [];
-            this.renderUploadPreview();
-            
-            const container = document.getElementById('chatContainer');
-            const welcome = document.getElementById('welcomeMsg');
-            container.innerHTML = ''; 
-            welcome.style.display = 'flex'; 
-            container.appendChild(welcome);
-            
-            document.getElementById('promptInput').value = '';
-            this.autoResize(document.getElementById('promptInput'));
-            localStorage.removeItem('ai_chat_history_ultimate');
-        },
-
-        /* --- 文件处理 --- */
-        async handleFiles(files) {
-            if (!files.length) return;
-            for (let file of files) {
-                if (!file.type.startsWith('image/')) continue;
-                const base64 = await this.fileToBase64(file);
-                this.state.uploadedImages.push(base64);
-            }
-            this.renderUploadPreview();
-            document.getElementById('fileInput').value = ''; 
-        },
-
-        fileToBase64(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
-                reader.readAsDataURL(file);
-            });
-        },
-
-        renderUploadPreview() {
-            const container = document.getElementById('uploadPreview');
-            container.innerHTML = '';
-            if (this.state.uploadedImages.length > 0) {
-                container.classList.add('has-files');
-                this.state.uploadedImages.forEach((img, idx) => {
-                    const div = document.createElement('div');
-                    div.className = 'preview-item';
-                    div.innerHTML = `<img src="${img}"><div class="preview-close" onclick="app.removeUpload(${idx})">✕</div>`;
-                    container.appendChild(div);
-                });
-            } else {
-                container.classList.remove('has-files');
-            }
-        },
-
-        removeUpload(idx) {
-            this.state.uploadedImages.splice(idx, 1);
-            this.renderUploadPreview();
-        },
-
-        /* --- 核心 API 逻辑 (重点优化) --- */
-        async sendMessage(overrideContent = null, overrideImages = null) {
-            if (this.state.isGenerating) {
-                if(confirm("正在生成中，是否强制停止？")) {
-                    this.state.isGenerating = false;
-                    const loading = document.querySelector('.msg-group.sys .timer-box');
-                    if(loading) loading.closest('.msg-group').remove();
-                }
-                return;
-            }
-
-            const input = document.getElementById('promptInput');
-            const prompt = overrideContent !== null ? overrideContent : input.value.trim();
-            const images = overrideImages !== null ? overrideImages : [...this.state.uploadedImages];
-            const config = this.saveSettings();
-
-            if (!prompt && images.length === 0) return;
-            if (!config.key || !config.url) {
-                alert("请先在设置中配置 API Key！");
-                this.toggleSettings(true);
-                return;
-            }
-
-            if (overrideContent === null) {
-                this.appendMessage({
-                    id: this.generateId(),
-                    role: 'user',
-                    content: prompt,
-                    images: images
-                });
-                input.value = '';
-                this.state.uploadedImages = [];
-                this.renderUploadPreview();
-                this.autoResize(input);
-            }
-
-            const loadingId = this.appendLoading();
-            this.state.isGenerating = true;
-
-            try {
-                // 1. 确定 EndPoint
-                let endpoint = config.url.replace(/\/$/, '');
-                if (config.forceImage) {
-                    // 强制 Image API 模式：移除 chat/completions，追加 images/generations
-                    endpoint = endpoint.replace(/\/chat\/completions.*/, '');
-                    if (!endpoint.endsWith('/images/generations')) {
-                        endpoint += '/images/generations';
-                    }
-                } else {
-                    // 默认 Chat 模式
-                    if (!endpoint.includes('/chat/completions') && !endpoint.includes('/images/generations')) {
-                        endpoint += '/chat/completions';
-                    }
-                }
-
-                // 2. 构建 Payload
-                const payload = this.buildPayload(prompt, images, config);
-
-                // 3. 发送请求
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${config.key}`
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    const errText = await response.text();
-                    // 尝试解析 JSON 错误
-                    let errorMsg = `HTTP ${response.status}`;
-                    try {
-                        const errJson = JSON.parse(errText);
-                        if(errJson.error && errJson.error.message) errorMsg += `: ${errJson.error.message}`;
-                        else errorMsg += `: ${errText.slice(0, 100)}`;
-                    } catch(e) {
-                        errorMsg += `: ${errText.slice(0, 100)}`;
-                    }
-                    throw new Error(errorMsg);
-                }
-                
-                const data = await response.json();
-                const result = this.parseResponse(data);
-                
-                this.removeLoading(loadingId);
-                
-                this.appendMessage({
-                    id: this.generateId(),
-                    role: 'sys',
-                    content: result.text,
-                    images: result.images
-                });
-
-            } catch (err) {
-                this.removeLoading(loadingId);
-                this.appendMessage({
-                    id: this.generateId(),
-                    role: 'sys',
-                    content: `生成出错: ${err.message}`,
-                    images: []
-                });
-            } finally {
-                this.state.isGenerating = false;
-            }
-        },
-
-        buildPayload(currentPrompt, currentImages, config) {
-            // 公共 Prompt 处理
-            let finalPrompt = currentPrompt;
-            if (config.style) finalPrompt += `, ${config.style}`;
-            // 只有 chat 模式或者某些 MJ 中转才需要 --ar 参数在 prompt 里
-            // DALL-E 原生是在 size 参数里，但放在 prompt 里也不影响
-            finalPrompt += ` --ar ${this.state.size}`;
-            if (config.steps) finalPrompt += ` --steps ${config.steps}`;
-
-            // --- 模式 A: 强制 Image API (Standard DALL-E) ---
-            if (config.forceImage) {
-                return {
-                    model: config.model || "dall-e-3",
-                    prompt: finalPrompt,
-                    n: 1,
-                    size: this.state.size, // DALL-E 3 只接受 1024x1024, 1024x1792 等标准格式
-                    quality: "standard", // 可选 hd
-                    response_format: "url"
-                };
-            }
-
-            // --- 模式 B: Chat API (Default/MJ Proxy) ---
-            let systemPrompt = "You are a helpful AI art assistant.";
-            if (config.neg) systemPrompt += ` Negative prompt: ${config.neg}.`;
-            
-            const currentContent = [{ type: "text", text: finalPrompt }];
-            currentImages.forEach(img => {
-                currentContent.push({ type: "image_url", image_url: { url: img } });
-            });
-
-            // 历史记录
-            const historyMessages = this.state.chatHistory.slice(-6).map(msg => {
-                let contentStr = msg.content || "";
-                if (msg.images && msg.images.length > 0 && msg.role === 'sys') {
-                    contentStr += " [Image Created]";
-                }
-                return {
-                    role: msg.role === 'sys' ? 'assistant' : 'user',
-                    content: contentStr
-                };
-            });
-
-            return {
-                model: config.model,
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    ...historyMessages,
-                    { role: "user", content: currentContent }
-                ],
-                stream: false
-            };
-        },
-
-        parseResponse(data) {
-            let images = [];
-            let text = "";
-
-            // 1. 标准 Image API 格式 (data: [{url:...}])
-            if (data.data && Array.isArray(data.data)) {
-                data.data.forEach(item => {
-                    if (item.url) images.push(item.url);
-                    else if (item.b64_json) images.push("data:image/png;base64," + item.b64_json);
-                });
-                // Image API 通常还有 revised_prompt
-                if (data.data[0] && data.data[0].revised_prompt) {
-                    text = `Prompt 优化: ${data.data[0].revised_prompt}`;
-                }
-            }
-            
-            // 2. Chat API 格式 (choices: [{message: {content: ...}}])
-            if (data.choices && data.choices.length > 0) {
-                const content = data.choices[0].message.content || "";
-                // 提取 Markdown 图片
-                const mdMatches = content.matchAll(/\!\[.*?\]\((.*?)\)/g);
-                for (const match of mdMatches) images.push(match[1]);
-                // 移除图片链接后的文本
-                text = content.replace(/\!\[.*?\]\((.*?)\)/g, '').trim();
-            }
-
-            if (images.length > 0 && (!text || text.length < 50)) text = ""; 
-            else if (!text && images.length === 0) text = "API 返回成功，但未检测到图片链接。";
-
-            return { text, images };
-        },
-
-        appendMessage(msg) {
-            this.state.chatHistory.push(msg);
-            this.saveChatHistory();
-            this.renderMessageToDOM(msg, true);
-        },
-
-        renderMessageToDOM(msg, animate = false) {
-            const container = document.getElementById('chatContainer');
-            document.getElementById('welcomeMsg').style.display = 'none';
-
-            const row = document.createElement('div');
-            row.className = `msg-group ${msg.role}`;
-            row.dataset.id = msg.id;
-            if(animate) row.style.animation = 'fadeIn 0.25s forwards ease-out';
-
-            let imgHtml = '';
-            if (msg.images && msg.images.length > 0) {
-                imgHtml = '<div class="chat-img-grid">';
-                msg.images.forEach(src => {
-                    if (!src.startsWith('http') && !src.startsWith('data:')) src = 'data:image/png;base64,' + src;
-                    const isResult = msg.role === 'sys';
-                    imgHtml += `<img src="${src}" class="chat-img ${isResult ? 'result-lg' : 'preview-sm'}" onclick="app.viewImage('${src}')">`;
-                });
-                imgHtml += '</div>';
-            }
-
-            const rawText = msg.content || "";
-            const formattedText = rawText.replace(/\n/g, '<br>');
-            const bubbleStyle = (!formattedText && imgHtml) ? 'padding:0; background:transparent; box-shadow:none;' : '';
-
-            let actionsHtml = '';
-            if (msg.role === 'user') {
-                actionsHtml = `
-                    <div class="action-bar">
-                        <button class="action-btn" onclick="app.editMessage('${msg.id}')">修改</button>
-                        <button class="action-btn delete" onclick="app.deleteMessage('${msg.id}')">删除</button>
-                    </div>`;
-            } else {
-                actionsHtml = `
-                    <div class="action-bar">
-                        <button class="action-btn" onclick="app.regenerateMessage('${msg.id}')">重试</button>
-                        <button class="action-btn delete" onclick="app.deleteMessage('${msg.id}')">删除</button>
-                    </div>`;
-            }
-
-            row.innerHTML = `
-                <div class="msg-content-wrapper">
-                    <div class="avatar">${msg.role === 'user' ? 'ME' : 'AI'}</div>
-                    <div style="display:flex; flex-direction:column; align-items:${msg.role==='user'?'flex-end':'flex-start'}; width:100%">
-                        <div class="bubble" style="${bubbleStyle}">
-                            ${formattedText ? `<div>${formattedText}</div>` : ''}
-                            ${imgHtml}
-                        </div>
-                        ${actionsHtml}
+            const html = `
+                <div class="item">
+                    <img src="${url}" referrerpolicy="no-referrer"
+                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2256%22 height=%2256%22><rect width=%2256%22 height=%2256%22 fill=%22%23e2e8f0%22/><text x=%2250%%22 y=%2255%%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%228%22 fill=%22%2394a3b8%22>预览受限</text></svg>'">
+                    <div class="item-info">
+                        <div class="img-label">图片 ${index + 1}</div>
+                        <div class="img-path">📁 ${dirPart}<strong>${displayName}</strong></div>
+                        <div class="img-url">${url.substring(0, 45)}${url.length > 45 ? '…' : ''}</div>
                     </div>
+                    <a href="${url}" download="${fileName}" target="_blank" rel="noreferrer" class="dl-link">下载</a>
                 </div>
             `;
-            
-            container.appendChild(row);
-            container.scrollTop = container.scrollHeight;
-        },
+            resultList.insertAdjacentHTML('beforeend', html);
+        });
 
-        deleteMessage(id) {
-            this.state.chatHistory = this.state.chatHistory.filter(m => m.id !== id);
-            this.saveChatHistory();
-            const el = document.querySelector(`.msg-group[data-id="${id}"]`);
-            if (el) el.remove();
-        },
+        log(`已解析 ${urls.length} 条链接，保存路径已应用`);
+    }
 
-        editMessage(id) {
-            const msg = this.state.chatHistory.find(m => m.id === id);
-            if(msg) {
-                document.getElementById('promptInput').value = msg.content || "";
-                this.autoResize(document.getElementById('promptInput'));
-                const idx = this.state.chatHistory.findIndex(m => m.id === id);
-                this.state.chatHistory = this.state.chatHistory.slice(0, idx);
-                this.saveChatHistory();
-                const container = document.getElementById('chatContainer');
-                const allMsgs = Array.from(container.children);
-                let found = false;
-                allMsgs.forEach(el => {
-                    if (el.dataset.id === id) found = true;
-                    if (found) el.remove();
-                });
-            }
-        },
+    /* ── 批量下载 ── */
+    async function batchDownload() {
+        const links = document.querySelectorAll('.dl-link');
+        if (links.length === 0) return alert('请先点击「解析并预览」');
 
-        regenerateMessage(sysId) {
-            const idx = this.state.chatHistory.findIndex(m => m.id === sysId);
-            if(idx > 0) {
-                const userMsg = this.state.chatHistory[idx-1];
-                if(userMsg && userMsg.role === 'user') {
-                    this.state.chatHistory = this.state.chatHistory.slice(0, idx); 
-                    this.saveChatHistory();
-                    const el = document.querySelector(`.msg-group[data-id="${sysId}"]`);
-                    if(el) el.remove();
-                    this.sendMessage(userMsg.content, userMsg.images);
-                }
-            }
-        },
-
-        appendLoading() {
-            const container = document.getElementById('chatContainer');
-            const id = 'loading-' + Date.now();
-            const row = document.createElement('div');
-            row.id = id;
-            row.className = 'msg-group sys';
-            row.innerHTML = `
-                <div class="msg-content-wrapper">
-                    <div class="avatar">AI</div>
-                    <div class="bubble" style="background:transparent; padding:0;">
-                        <div class="timer-box">
-                            <div class="spinner"></div>
-                            <span id="timer-${id}">Drawing... 0.0s</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.appendChild(row);
-            container.scrollTop = container.scrollHeight;
-
-            const startTime = Date.now();
-            this.state.timerInterval = setInterval(() => {
-                const el = document.getElementById(`timer-${id}`);
-                if (el) {
-                    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-                    el.innerText = `Drawing... ${elapsed}s`;
-                }
-            }, 100);
-            return id;
-        },
-
-        removeLoading(id) {
-            const el = document.getElementById(id);
-            if (el) el.remove();
-            if (this.state.timerInterval) {
-                clearInterval(this.state.timerInterval);
-                this.state.timerInterval = null;
-            }
-        },
-
-        viewImage(src) {
-            const modal = document.getElementById('imageModal');
-            document.getElementById('modalImg').src = src;
-            const link = document.getElementById('downloadLink');
-            link.href = src;
-            link.download = `ai-art-${Date.now()}.png`;
-            modal.classList.add('active');
+        log(`开始批量触发下载，共 ${links.length} 张...`);
+        for (let i = 0; i < links.length; i++) {
+            links[i].click();
+            log(`已触发第 ${i + 1} 张：${links[i].getAttribute('download').split('/').pop()}`);
+            await new Promise(r => setTimeout(r, 1200));
         }
-    };
+        alert('触发完毕！\n\n✅ Chrome/Edge：文件已保存到指定子文件夹\n⚠️ 若弹出"允许下载多个文件"，请点允许\n📱 手机端：若新页面打开图片，请长按→保存图片');
+    }
 
-    document.addEventListener('DOMContentLoaded', () => app.init());
-
+    // 初始化预览
+    updatePreview();
 </script>
+
 </body>
 </html>
